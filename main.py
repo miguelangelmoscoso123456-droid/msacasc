@@ -42,11 +42,28 @@ def get_db_connection():
                 # Descargar la base de datos
                 print(f"Descargando base de datos desde: {db_url}")
                 urllib.request.urlretrieve(db_url, _db_path)
-                print("Base de datos descargada exitosamente")
+                
+                # Verificar que el archivo se descargó correctamente
+                file_size = os.path.getsize(_db_path)
+                print(f"Base de datos descargada exitosamente. Tamaño: {file_size} bytes")
+                
+                # Verificar que es un archivo SQLite válido
+                try:
+                    test_conn = sqlite3.connect(_db_path)
+                    test_cursor = test_conn.cursor()
+                    test_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                    tables = test_cursor.fetchall()
+                    print(f"Tablas encontradas en la base de datos: {tables}")
+                    test_conn.close()
+                except Exception as db_error:
+                    print(f"Error verificando base de datos: {db_error}")
+                    raise Exception(f"El archivo descargado no es una base de datos SQLite válida: {db_error}")
+                    
             except Exception as e:
                 print(f"Error descargando base de datos: {e}")
                 # Crear base de datos vacía como fallback
                 open(_db_path, 'wb').close()
+                print("Base de datos vacía creada como fallback")
         else:
             # Desarrollo local - usar archivo local
             _db_path = 'Sunarp.db'
