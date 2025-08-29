@@ -35,8 +35,8 @@ def get_db_connection():
             temp_dir = tempfile.mkdtemp()
             _db_path = os.path.join(temp_dir, "Sunarp.db")
             
-            # URL de la base de datos desde Google Drive
-            db_url = os.environ.get("DATABASE_URL", "https://drive.google.com/uc?export=download&id=1Izo_ua3vIkyFgyOv7gjCoAbKvLEGJRub")
+            # URL de la base de datos desde Google Drive con confirmación
+            db_url = os.environ.get("DATABASE_URL", "https://drive.usercontent.google.com/download?id=1Izo_ua3vIkyFgyOv7gjCoAbKvLEGJRub&export=download&pli=1&authuser=0&confirm=t&uuid=31374f0f-a34f-4898-9d15-409c4f2c49a1&at=AN8xHoo3cpJVUbwkhm53pV2gXFnb%3A1756475097337")
             
             try:
                 # Descargar la base de datos
