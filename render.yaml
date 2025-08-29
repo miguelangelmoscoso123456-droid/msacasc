@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: sunarp-api
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: DATABASE_URL
+        value: "https://drive.usercontent.google.com/download?id=1Izo_ua3vIkyFgyOv7gjCoAbKvLEGJRub&export=download&pli=1&authuser=0&confirm=t&uuid=31374f0f-a34f-4898-9d15-409c4f2c49a1&at=AN8xHoo3cpJVUbwkhm53pV2gXFnb%3A1756475097337"
