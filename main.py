@@ -21,84 +21,62 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Variable global para la conexión a la base de datos
-_db_connection = None
+# Variable global para la ruta de la base de datos
 _db_path = None
 
-def get_db_connection():
-    global _db_connection, _db_path
+def get_db_path():
+    global _db_path
     
-    try:
-        if _db_connection is None:
-            # En producción, descargar la base de datos desde una URL
-            if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RENDER") or os.environ.get("DATABASE_URL"):
-                # Crear directorio persistente para la base de datos
-                if os.environ.get("RENDER"):
-                    # En Render, usar directorio persistente
-                    _db_path = '/tmp/Sunarp.db'
-                else:
-                    # En Railway u otros, usar directorio temporal
-                    temp_dir = tempfile.mkdtemp()
-                    _db_path = os.path.join(temp_dir, "Sunarp.db")
-                
-                # Verificar si ya existe la base de datos descargada
-                if not os.path.exists(_db_path):
-                    # URL de la base de datos desde Google Drive con confirmación
-                    db_url = os.environ.get("DATABASE_URL", "https://drive.usercontent.google.com/download?id=1Izo_ua3vIkyFgyOv7gjCoAbKvLEGJRub&export=download&pli=1&authuser=0&confirm=t&uuid=31374f0f-a34f-4898-9d15-409c4f2c49a1&at=AN8xHoo3cpJVUbwkhm53pV2gXFnb%3A1756475097337")
-                    
-                    try:
-                        # Descargar la base de datos
-                        print(f"Descargando base de datos desde: {db_url}")
-                        urllib.request.urlretrieve(db_url, _db_path)
-                        
-                        # Verificar que el archivo se descargó correctamente
-                        file_size = os.path.getsize(_db_path)
-                        print(f"Base de datos descargada exitosamente. Tamaño: {file_size} bytes")
-                        
-                        # Verificar que es un archivo SQLite válido
-                        try:
-                            test_conn = sqlite3.connect(_db_path)
-                            test_cursor = test_conn.cursor()
-                            test_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-                            tables = test_cursor.fetchall()
-                            print(f"Tablas encontradas en la base de datos: {tables}")
-                            test_conn.close()
-                        except Exception as db_error:
-                            print(f"Error verificando base de datos: {db_error}")
-                            raise Exception(f"El archivo descargado no es una base de datos SQLite válida: {db_error}")
-                            
-                    except Exception as e:
-                        print(f"Error descargando base de datos: {e}")
-                        # Crear base de datos vacía como fallback
-                        open(_db_path, 'wb').close()
-                        print("Base de datos vacía creada como fallback")
-                else:
-                    print(f"Base de datos ya existe en: {_db_path}")
+    if _db_path is None:
+        # En producción, descargar la base de datos desde una URL
+        if os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RENDER") or os.environ.get("DATABASE_URL"):
+            # Crear directorio persistente para la base de datos
+            if os.environ.get("RENDER"):
+                # En Render, usar directorio persistente
+                _db_path = '/tmp/Sunarp.db'
             else:
-                # Desarrollo local - usar archivo local
-                _db_path = 'Sunarp.db'
+                # En Railway u otros, usar directorio temporal
+                temp_dir = tempfile.mkdtemp()
+                _db_path = os.path.join(temp_dir, "Sunarp.db")
             
-            _db_connection = sqlite3.connect(_db_path)
-            _db_connection.row_factory = sqlite3.Row
-            
-            # Crear índices si no existen
-            create_indexes(_db_connection)
-        
-        # Verificar que la conexión sigue activa
-        _db_connection.execute("SELECT 1")
-        
-        return _db_connection
-        
-    except sqlite3.Error as e:
-        print(f"Error en la conexión a la base de datos: {e}")
-        # Intentar reconectar
-        if _db_connection:
-            try:
-                _db_connection.close()
-            except:
-                pass
-        _db_connection = None
-        return get_db_connection()  # Recursión para reconectar
+            # Verificar si ya existe la base de datos descargada
+            if not os.path.exists(_db_path):
+                # URL de la base de datos desde Google Drive con confirmación
+                db_url = os.environ.get("DATABASE_URL", "https://drive.usercontent.google.com/download?id=1Izo_ua3vIkyFgyOv7gjCoAbKvLEGJRub&export=download&pli=1&authuser=0&confirm=t&uuid=31374f0f-a34f-4898-9d15-409c4f2c49a1&at=AN8xHoo3cpJVUbwkhm53pV2gXFnb%3A1756475097337")
+                
+                try:
+                    # Descargar la base de datos
+                    print(f"Descargando base de datos desde: {db_url}")
+                    urllib.request.urlretrieve(db_url, _db_path)
+                    
+                    # Verificar que el archivo se descargó correctamente
+                    file_size = os.path.getsize(_db_path)
+                    print(f"Base de datos descargada exitosamente. Tamaño: {file_size} bytes")
+                    
+                    # Verificar que es un archivo SQLite válido
+                    try:
+                        test_conn = sqlite3.connect(_db_path)
+                        test_cursor = test_conn.cursor()
+                        test_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+                        tables = test_cursor.fetchall()
+                        print(f"Tablas encontradas en la base de datos: {tables}")
+                        test_conn.close()
+                    except Exception as db_error:
+                        print(f"Error verificando base de datos: {db_error}")
+                        raise Exception(f"El archivo descargado no es una base de datos SQLite válida: {db_error}")
+                        
+                except Exception as e:
+                    print(f"Error descargando base de datos: {e}")
+                    # Crear base de datos vacía como fallback
+                    open(_db_path, 'wb').close()
+                    print("Base de datos vacía creada como fallback")
+            else:
+                print(f"Base de datos ya existe en: {_db_path}")
+        else:
+            # Desarrollo local - usar archivo local
+            _db_path = 'Sunarp.db'
+    
+    return _db_path
 
 # Crear índices para optimizar consultas
 def create_indexes(conn):
@@ -119,9 +97,22 @@ def create_indexes(conn):
 # Crear índices al iniciar la aplicación
 @app.on_event("startup")
 async def startup_event():
-    # La conexión se crea automáticamente al primer uso
-    # Los índices se crean en get_db_connection()
-    pass
+    # Crear índices al iniciar la aplicación
+    db_path = get_db_path()
+    try:
+        conn = sqlite3.connect(db_path)
+        create_indexes(conn)
+        conn.close()
+        print("Índices creados exitosamente al inicio de la aplicación")
+    except Exception as e:
+        print(f"Error creando índices al inicio: {e}")
+
+def get_db_connection():
+    """Obtener una nueva conexión a la base de datos para cada petición"""
+    db_path = get_db_path()
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.get("/")
 async def root():
